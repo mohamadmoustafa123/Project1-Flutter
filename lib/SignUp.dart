@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:project1/SignUp.dart';
 
 import 'ToDo.dart';
 
-class SignIn extends StatefulWidget {
-  const SignIn({super.key});
+class SignUp extends StatefulWidget {
+  const SignUp({super.key});
 
   @override
-  State<SignIn> createState() => _SignInState();
+  State<SignUp> createState() => _SignUpState();
 }
 
-class _SignInState extends State<SignIn> {
+class _SignUpState extends State<SignUp> {
   TextEditingController name = TextEditingController();
   TextEditingController email = TextEditingController();
   TextEditingController password = TextEditingController();
@@ -22,7 +21,7 @@ class _SignInState extends State<SignIn> {
       appBar: AppBar(
         title: Center(
           child: Text(
-            "Sign In",
+            "Sign Up",
             style: TextStyle(color: Colors.purple, fontWeight: FontWeight.w900),
           ),
         ),
@@ -34,7 +33,15 @@ class _SignInState extends State<SignIn> {
           child: Column(
             children: [
               SizedBox(height: 20),
-
+              TextField(
+                controller: name,
+                decoration: InputDecoration(
+                  labelText: "Name",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+              ),
               SizedBox(height: 15),
               TextField(
                 controller: email,
@@ -56,43 +63,28 @@ class _SignInState extends State<SignIn> {
                 ),
               ),
               SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      if (name.text == "" ||
-                          email.text == "" ||
-                          password.text == "") {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("you should enter all filled !!!"),
-                            backgroundColor: Colors.red,
-                            duration: Duration(seconds: 3),
-                          ),
-                        );
-                      } else {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ToDo()),
-                        );
-                      }
-                    },
-                    child: Text("Sign in"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
+              SizedBox(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (name.text == "" ||
+                        email.text == "" ||
+                        password.text == "") {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("you should enter all filled !!!"),
+                          backgroundColor: Colors.red,
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                    } else {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => SignUp()),
+                        MaterialPageRoute(builder: (context) => ToDo()),
                       );
-                    },
-                    child: Text(
-                      "Register",
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ],
+                    }
+                  },
+                  child: Text("Submit"),
+                ),
               ),
             ],
           ),
