@@ -1,4 +1,8 @@
+import 'dart:convert' as convert;
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import 'ToDo.dart';
 
@@ -13,6 +17,45 @@ class _SignUpState extends State<SignUp> {
   TextEditingController name = TextEditingController();
   TextEditingController email = TextEditingController();
   TextEditingController password = TextEditingController();
+
+  Future<void> submitUser() async {
+    String path = "http://mohamadmoustafa.atwebpages.com/signUp.php";
+    Uri uri = Uri.parse(path);
+    var response = await http.post(
+      uri,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: convert.jsonEncode(<String, String>{
+        'name': name.text,
+        'email': email.text,
+        'password': password.text,
+      }),
+    );
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      print("response bodyyy: ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(data['message']),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      Navigator.push(context, MaterialPageRoute(builder: (context) => ToDo()));
+    } else {
+      var data = jsonDecode(response.body);
+      print("response bodyyy: ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(data['error']),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   String msg = "";
 
   @override
@@ -77,10 +120,7 @@ class _SignUpState extends State<SignUp> {
                         ),
                       );
                     } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ToDo()),
-                      );
+                      submitUser();
                     }
                   },
                   child: Text("Submit"),

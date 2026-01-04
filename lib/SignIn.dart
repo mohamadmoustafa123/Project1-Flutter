@@ -1,4 +1,8 @@
+import 'dart:convert' as convert;
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:project1/SignUp.dart';
 
 import 'ToDo.dart';
@@ -11,9 +15,46 @@ class SignIn extends StatefulWidget {
 }
 
 class _SignInState extends State<SignIn> {
-  TextEditingController name = TextEditingController();
   TextEditingController email = TextEditingController();
   TextEditingController password = TextEditingController();
+
+  Future<void> submitLogin() async {
+    String path = "http://mohamadmoustafa.atwebpages.com/signIn.php";
+    Uri uri = Uri.parse(path);
+    var response = await http.post(
+      uri,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: convert.jsonEncode(<String, String>{
+        'email': email.text,
+        'password': password.text,
+      }),
+    );
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      print("response bodyyy: ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(data['message']),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      Navigator.push(context, MaterialPageRoute(builder: (context) => ToDo()));
+    } else {
+      var data = jsonDecode(response.body);
+      print("response bodyyy: ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(data['error']),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   String msg = "";
 
   @override
@@ -61,9 +102,7 @@ class _SignInState extends State<SignIn> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      if (name.text == "" ||
-                          email.text == "" ||
-                          password.text == "") {
+                      if (email.text == "" || password.text == "") {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text("you should enter all filled !!!"),
@@ -72,10 +111,7 @@ class _SignInState extends State<SignIn> {
                           ),
                         );
                       } else {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ToDo()),
-                        );
+                        submitLogin();
                       }
                     },
                     child: Text("Sign in"),
