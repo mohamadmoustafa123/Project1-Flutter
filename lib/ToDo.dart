@@ -1,4 +1,9 @@
+import 'dart:convert' as convert;
+import 'dart:convert' as converter;
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:project1/Completed.dart';
 import 'package:project1/Non-Completed.dart';
 
@@ -12,6 +17,12 @@ class ToDo extends StatefulWidget {
 }
 
 class _TodoState extends State<ToDo> {
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
   TextEditingController tasksCtrl = TextEditingController();
   TextEditingController tasksCtrlEditings = TextEditingController();
   String tasks = "";
@@ -20,7 +31,173 @@ class _TodoState extends State<ToDo> {
   bool showCardEdit = false;
   int edittingIndex = 0;
 
-  void FetchData() {}
+  Future<void> fetchData() async {
+    String path = "http://mohamadmoustafa.atwebpages.com/getTasks.php";
+    Uri uri = Uri.parse(path);
+    var response = await http.get(uri);
+    if (response.statusCode == 200) {
+      setState(() {
+        var jsonArray = converter.jsonDecode(response.body);
+        for (var element in jsonArray) {
+          bool doneStatus = element['isCompleted'].toString() == '1'
+              ? true
+              : false;
+          Task t = Task(
+            ID: int.parse(element["ID"]),
+            title: element["Task"],
+            done: doneStatus,
+          );
+
+          listTasks.add(t);
+        }
+      });
+    }
+  }
+
+  Future<void> addTask() async {
+    String path = "http://mohamadmoustafa.atwebpages.com/addTask.php";
+    Uri uri = Uri.parse(path);
+    var response = await http.post(
+      uri,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: convert.jsonEncode(<String, String>{'Task': tasksCtrl.text}),
+    );
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      setState(() {
+        listTasks.add(Task(ID: data['id'], title: tasksCtrl.text));
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(data['message']),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      tasksCtrl.text = "";
+    } else {
+      var data = jsonDecode(response.body);
+      print("response bodyyy: ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(data['error']),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> editTasks() async {
+    String path =
+        "http://mohamadmoustafa.atwebpages.com/updateTask.php?id=${edittingIndex}";
+    Uri uri = Uri.parse(path);
+    var response = await http.put(
+      uri,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: convert.jsonEncode(<String, String>{
+        'newTitle': tasksCtrlEditings.text,
+      }),
+    );
+    if (response.statusCode == 200) {
+      setState(() {
+        Task taskbyid = listTasks.firstWhere((t) => t.ID == edittingIndex);
+        taskbyid.title = tasksCtrlEditings.text;
+        showCardEdit = !showCardEdit;
+        String message = response.body;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      });
+    } else {
+      String message = response.body;
+      print("response bodyyy: ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> updateCompleted(Task objTask) async {
+    String path =
+        "http://mohamadmoustafa.atwebpages.com/updateTaskIsCompleted.php?id=${objTask.ID}";
+    Uri uri = Uri.parse(path);
+    var response = await http.put(
+      uri,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+    if (response.statusCode == 200) {
+      setState(() {
+        objTask.done = !objTask.done;
+        String message = response.body;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      });
+    } else {
+      String message = response.body;
+      print("response bodyyy: ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> deleteTask(int ID, int index) async {
+    String path = "http://mohamadmoustafa.atwebpages.com/delete.php?id=${ID}";
+    Uri uri = Uri.parse(path);
+    var response = await http.delete(
+      uri,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+    if (response.statusCode == 200) {
+      setState(() {
+        listTasks.removeAt(index);
+        String message = response.body;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      });
+    } else {
+      String message = response.body;
+      print("response bodyyy: ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,17 +222,7 @@ class _TodoState extends State<ToDo> {
                       SizedBox(width: 20),
                       ElevatedButton(
                         onPressed: () {
-                          setState(() {
-                            listTasks.add(Task(title: tasksCtrl.text));
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(" your task added "),
-                              backgroundColor: Colors.green,
-                              duration: Duration(seconds: 3),
-                            ),
-                          );
-                          tasksCtrl.text = "";
+                          addTask();
                         },
                         child: Text("Add "),
                       ),
@@ -93,7 +260,7 @@ class _TodoState extends State<ToDo> {
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        objTask.done = !objTask.done;
+                                        updateCompleted(objTask);
                                       });
                                     },
                                   ),
@@ -101,7 +268,7 @@ class _TodoState extends State<ToDo> {
                                     icon: Icon(Icons.edit, color: Colors.blue),
                                     onPressed: () {
                                       setState(() {
-                                        edittingIndex = index;
+                                        edittingIndex = objTask.ID;
                                         tasksCtrlEditings.text = objTask.title;
                                         showCardEdit = !showCardEdit;
                                       });
@@ -111,7 +278,7 @@ class _TodoState extends State<ToDo> {
                                     icon: Icon(Icons.delete, color: Colors.red),
                                     onPressed: () {
                                       setState(() {
-                                        listTasks.removeAt(element.key);
+                                        deleteTask(objTask.ID, index);
                                       });
                                     },
                                   ),
@@ -194,11 +361,7 @@ class _TodoState extends State<ToDo> {
                           ),
                           ElevatedButton(
                             onPressed: () {
-                              setState(() {
-                                listTasks[edittingIndex].title =
-                                    tasksCtrlEditings.text;
-                                showCardEdit = !showCardEdit;
-                              });
+                              editTasks();
                             },
                             child: Text("Edit"),
                           ),
